@@ -50,7 +50,7 @@ package bsg_cache_pkg;
     ,AMOMINU_W = 6'b100111    // atomic min unsigned
     ,AMOMAXU_W = 6'b101000    // atomic max unsigned
 
-    // 64-bit atomic (reserved)
+    // 64-bit atomic
     ,AMOSWAP_D = 6'b110000    // atomic swap
     ,AMOADD_D  = 6'b110001    // atomic add
     ,AMOXOR_D  = 6'b110010    // atomic xor 
@@ -101,7 +101,14 @@ package bsg_cache_pkg;
    
     logic atomic_op; 
     logic amoswap_op;
+    logic amoadd_op;
+    logic amoxor_op;
+    logic amoand_op;
     logic amoor_op;
+    logic amomin_op;
+    logic amomax_op;
+    logic amominu_op;
+    logic amomaxu_op;
   } bsg_cache_decode_s;
 
 

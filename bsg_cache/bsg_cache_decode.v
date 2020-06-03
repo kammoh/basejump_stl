@@ -15,9 +15,12 @@ module bsg_cache_decode
   always_comb begin
     case (opcode_i)
       // double
+      AMOSWAP_D, AMOADD_D, AMOAND_D, AMOOR_D, AMOXOR_D,
+      AMOMIN_D, AMOMAX_D, AMOMINU_D, AMOMAXU_D,
       LD, SD, LDU: decode_o.data_size_op = 2'b11;
       // word
-      AMOSWAP_W, AMOOR_W,
+      AMOSWAP_W, AMOADD_W, AMOAND_W, AMOOR_W, AMOXOR_W,
+      AMOMIN_W, AMOMAX_W, AMOMINU_W, AMOMAXU_W,
       LW, SW, LWU: decode_o.data_size_op = 2'b10;
       // half
       LH, SH, LHU: decode_o.data_size_op = 2'b01;
@@ -34,7 +37,14 @@ module bsg_cache_decode
     | (opcode_i == LW)
     | (opcode_i == LD)
     | (opcode_i == AMOSWAP_W)
-    | (opcode_i == AMOOR_W);
+    | (opcode_i == AMOADD_W)
+    | (opcode_i == AMOXOR_W)
+    | (opcode_i == AMOAND_W)
+    | (opcode_i == AMOOR_W)
+    | (opcode_i == AMOMAX_W)
+    | (opcode_i == AMOMIN_W)
+    | (opcode_i == AMOMAXU_W)
+    | (opcode_i == AMOMINU_W);
 
   assign decode_o.ld_op = (opcode_i == LB)
     | (opcode_i == LH)
@@ -65,11 +75,23 @@ module bsg_cache_decode
   assign decode_o.tag_read_op = ~decode_o.tagst_op;
 
   // atomic extension
-  assign decode_o.atomic_op = (opcode_i == AMOSWAP_W)
-    | (opcode_i == AMOOR_W); 
-  assign decode_o.amoswap_op = (opcode_i == AMOSWAP_W);
-  assign decode_o.amoor_op = (opcode_i == AMOOR_W);
-
-
+  assign decode_o.atomic_op = (opcode_i == AMOSWAP_W) | (opcode_i == AMOSWAP_D)
+    | (opcode_i == AMOADD_W) | (opcode_i == AMOADD_D)
+    | (opcode_i == AMOXOR_W) | (opcode_i == AMOXOR_D)
+    | (opcode_i == AMOAND_W) | (opcode_i == AMOAND_D)
+    | (opcode_i == AMOOR_W) | (opcode_i == AMOOR_D)
+    | (opcode_i == AMOMIN_W) | (opcode_i == AMOMIN_D)
+    | (opcode_i == AMOMAX_W) | (opcode_i == AMOMAX_D)
+    | (opcode_i == AMOMINU_W) | (opcode_i == AMOMINU_D)
+    | (opcode_i == AMOMAXU_W) | (opcode_i == AMOMAXU_D);
+  assign decode_o.amoswap_op = (opcode_i == AMOSWAP_W) | (opcode_i == AMOSWAP_D);
+  assign decode_o.amoadd_op = (opcode_i == AMOADD_W) | (opcode_i == AMOADD_D);
+  assign decode_o.amoxor_op = (opcode_i == AMOXOR_W) | (opcode_i == AMOXOR_D);
+  assign decode_o.amoand_op = (opcode_i == AMOAND_W) | (opcode_i == AMOAND_D);
+  assign decode_o.amoor_op = (opcode_i == AMOOR_W) | (opcode_i == AMOOR_D);
+  assign decode_o.amomin_op = (opcode_i == AMOMIN_W) | (opcode_i == AMOMIN_D);
+  assign decode_o.amomax_op = (opcode_i == AMOMAX_W) | (opcode_i == AMOMAX_D);
+  assign decode_o.amominu_op = (opcode_i == AMOMINU_W) | (opcode_i == AMOMINU_D);
+  assign decode_o.amomaxu_op = (opcode_i == AMOMAXU_W) | (opcode_i == AMOMAXU_D);
 
 endmodule
