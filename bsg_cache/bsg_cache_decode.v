@@ -36,15 +36,7 @@ module bsg_cache_decode
     | (opcode_i == LH)
     | (opcode_i == LW)
     | (opcode_i == LD)
-    | (opcode_i == AMOSWAP_W)
-    | (opcode_i == AMOADD_W)
-    | (opcode_i == AMOXOR_W)
-    | (opcode_i == AMOAND_W)
-    | (opcode_i == AMOOR_W)
-    | (opcode_i == AMOMAX_W)
-    | (opcode_i == AMOMIN_W)
-    | (opcode_i == AMOMAXU_W)
-    | (opcode_i == AMOMINU_W);
+    | decode_o.atomic_op;
 
   assign decode_o.ld_op = (opcode_i == LB)
     | (opcode_i == LH)

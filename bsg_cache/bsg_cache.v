@@ -20,6 +20,8 @@ module bsg_cache
     ,parameter sets_p="inv"
     ,parameter ways_p="inv"
 
+    ,parameter amo_support_p=(e_amo_swap | e_amo_or)
+
     // dma burst width
     ,parameter dma_data_width_p=data_width_p // default value. it can also be pow2 multiple of data_width_p.
 
@@ -570,6 +572,7 @@ module bsg_cache
   //
   logic [data_sel_mux_els_lp-1:0][data_width_p-1:0] sbuf_data_in_mux_li;
   logic [data_sel_mux_els_lp-1:0][data_mask_width_lp-1:0] sbuf_mask_in_mux_li;
+  logic [data_sel_mux_els_lp-1:0][data_width_p-1:0] atomic_mem_data_li;
   logic [data_width_p-1:0] sbuf_data_in;
   logic [data_mask_width_lp-1:0] sbuf_mask_in;
   logic [data_width_p-1:0] snoop_or_ld_data;
@@ -598,20 +601,41 @@ module bsg_cache
     logic [slice_width_lp-1:0] slice_data;
 
     // AMO computation
-    // Only word width AMOs are currently supported
-    if (i == 2'b10) begin
+    // AMOs are only supported for words and double words
+    if ((i == 2'b10) || (i == 2'b11)) begin
       logic [slice_width_lp-1:0] atomic_reg_data, atomic_mem_data;
 
       always_comb begin
         atomic_reg_data = data_v_r[0+:slice_width_lp];
-        atomic_mem_data = snoop_or_ld_data[0+:slice_width_lp];
+        atomic_mem_data = atomic_mem_data_li[i][0+:slice_width_lp];
 
-        if (decode_v_r.amoswap_op) begin
-          slice_data = atomic_reg_data;
-        end 
-        else if (decode_v_r.amoor_op) begin
+        if ((amo_support_p & e_amo_swap) && decode_v_r.amoswap_op) begin
+            slice_data = atomic_reg_data;
+        end
+        else if ((amo_support_p & e_amo_and) && decode_v_r.amoand_op) begin
+            slice_data = atomic_reg_data & atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_or) && decode_v_r.amoor_op) begin
           slice_data = atomic_reg_data | atomic_mem_data;
-        end 
+        end
+        else if ((amo_support_p & e_amo_xor) && decode_v_r.amoxor_op) begin
+          slice_data = atomic_reg_data ^ atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_add) && decode_v_r.amoadd_op) begin
+          slice_data = atomic_reg_data + atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_min) && decode_v_r.amomin_op) begin
+          slice_data = ($signed(atomic_reg_data) < $signed(atomic_mem_data)) ? atomic_reg_data : atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_max) && decode_v_r.amomax_op) begin
+          slice_data = ($signed(atomic_reg_data) > $signed(atomic_mem_data)) ? atomic_reg_data : atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_minu) && decode_v_r.amominu_op) begin
+          slice_data = (atomic_reg_data < atomic_mem_data) ? atomic_reg_data : atomic_mem_data;
+        end
+        else if ((amo_support_p & e_amo_maxu) && decode_v_r.amomaxu_op) begin
+          slice_data = (atomic_reg_data > atomic_mem_data) ? atomic_reg_data : atomic_mem_data;
+        end
         else begin
           // Normal data replication
           slice_data = data_v_r[0+:slice_width_lp];
@@ -758,6 +782,8 @@ module bsg_cache
     ,.sel_i(decode_v_r.data_size_op[0+:lg_data_sel_mux_els_lp])
     ,.data_o(ld_data_final_lo)
   );
+
+  assign atomic_mem_data_li = ld_data_final_li;
 
   // final output mux
   always_comb begin
